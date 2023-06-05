@@ -1,5 +1,6 @@
 package com.example.openindemo.api
 
+import com.example.openindemo.utils.Constants
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -17,7 +18,7 @@ class RetrofitInstance {
                 .build()
 
             Retrofit.Builder()
-                .baseUrl("https://api.inopenapp.com/api/")
+                .baseUrl(Constants.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(client)
                 .build()
