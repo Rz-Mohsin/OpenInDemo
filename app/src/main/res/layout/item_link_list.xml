@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/bg_item_link_list">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/ivLinkThumbNail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@drawable/ic_link"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tvLinkName"
+        app:layout_constraintBottom_toBottomOf="@+id/tvLinkCreationTime"
+        />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvLinkName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="Sample Link Name"
+        android:textSize="14sp"
+        android:textColor="@color/black"
+        android:singleLine="true"
+        app:layout_constraintEnd_toStartOf="@id/tvClicks"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/ivLinkThumbNail"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvClicksCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="12155"
+        android:textSize="14sp"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvLinkCreationTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="8dp"
+        android:text="05-06-23"
+        android:textSize="12sp"
+        android:textColor="@color/color_grey"
+        app:layout_constraintStart_toStartOf="@+id/tvLinkName"
+        app:layout_constraintTop_toBottomOf="@+id/tvLinkName"/>
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvClicks"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginVertical="8dp"
+        android:text="Clicks"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvClicksCount"
+        />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/linkLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_smart_link"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvLinkCreationTime">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvSmartLink"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginVertical="8dp"
+            android:text="kjsnbcsnxnsjncskcs m kcnskc"
+            android:textColor="@color/color_primary"
+            app:layout_constraintEnd_toStartOf="@+id/ivCopyLink"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/ivCopyLink"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:src="@drawable/ic_files"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
