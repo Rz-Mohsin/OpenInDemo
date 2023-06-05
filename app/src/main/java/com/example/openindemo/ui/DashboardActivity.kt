@@ -30,7 +30,6 @@ class DashboardActivity : AppCompatActivity() {
         //initialising viewModel
         viewModel = ViewModelProvider(this,DashboardViewModelProviderFactory(repository))[DashboardViewModel::class.java]
 
-        //fetching data when app opens
         if(hasInternetConnection()){
             viewModel.getAllData(endPoint,"Bearer ${Constants.token}")
         }
