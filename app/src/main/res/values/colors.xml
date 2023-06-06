@@ -10,5 +10,8 @@
     <color name="color_primary">#0E6FFF</color>
     <color name="color_grey">#999CA0</color>
     <color name="color_main_background">#F5F5F5</color>
+    <color name="color_primary_light">#BED8FD</color>
+    <color name="color_primary_extra_light">#000E6FFF</color>
+
 
 </resources>

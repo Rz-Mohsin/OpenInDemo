@@ -1,12 +1,14 @@
 package com.example.openindemo.ui
 
+import android.graphics.Color
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,8 +19,16 @@ import com.example.openindemo.models.Link
 import com.example.openindemo.repo.OpenInRepository
 import com.example.openindemo.utils.Constants
 import com.example.openindemo.utils.Resource
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
+import com.github.mikephil.charting.utils.Utils
+import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
+import kotlin.math.ceil
+
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -27,9 +37,14 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var binding : ActivityDashboardBinding
     private lateinit var viewModel: DashboardViewModel
     private lateinit var madapter : LinkListAdapter
+
     private var topLinkList = ArrayList<Link>()
     private var recentLinkList = ArrayList<Link>()
     private val endPoint = "v1/dashboardNew"
+    private val formattedDate = ArrayList<String>()
+    private val clickCount = ArrayList<Int>()
+    private var urlData : Map<String,Int>? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,16 +53,20 @@ class DashboardActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this,DashboardViewModelProviderFactory(repository))[DashboardViewModel::class.java]
         madapter = LinkListAdapter(this)
+
         setUpRecyclerView()
         initViews()
+        observeViewModel()
 
         if(hasInternetConnection()){
-            viewModel.getAllData(endPoint,"Bearer ${Constants.token}")
+            if(savedInstanceState==null){
+                viewModel.getAllData(endPoint,"Bearer ${Constants.token}")
+            }
         }
         else{
             Toast.makeText(this,"Failed to load data, Check internet connection",Toast.LENGTH_SHORT).show()
         }
-        observeViewModel()
+
         setClickListener()
     }
 
@@ -60,38 +79,46 @@ class DashboardActivity : AppCompatActivity() {
         viewModel.userData.observe(this){resource->
             when(resource){
                 is Resource.Success -> {
+                    binding.progressCircular.isVisible = true
                     resource.data?.let { it ->
-                        Log.d("error001","Fetched data $it")
+                        Log.d("error001","Fetched url chart ${it.data.overall_url_chart}")
                         val topLinks  = it.data.top_links
                         val recentLinks = it.data.recent_links
-                        topLinks.forEach {
+                        topLinks.forEach { tLink ->
                             topLinkList.add(
                                 Link(
-                                    it.thumbnail,
-                                    it.created_at,
-                                    it.smart_link,
-                                    it.times_ago,
-                                    it.title,
-                                    it.total_clicks,
-                                    it.url_id
+                                    tLink.thumbnail,
+                                    tLink.created_at,
+                                    tLink.smart_link,
+                                    tLink.times_ago,
+                                    tLink.title,
+                                    tLink.total_clicks,
+                                    tLink.url_id
                                 )
                             )
                         }
-                        recentLinks.forEach {
+                        recentLinks.forEach { rLink ->
                             recentLinkList.add(
                                 Link(
-                                    it.thumbnail,
-                                    it.created_at,
-                                    it.smart_link,
-                                    it.times_ago,
-                                    it.title,
-                                    it.total_clicks,
-                                    it.url_id
+                                    rLink.thumbnail,
+                                    rLink.created_at,
+                                    rLink.smart_link,
+                                    rLink.times_ago,
+                                    rLink.title,
+                                    rLink.total_clicks,
+                                    rLink.url_id
                                 )
                             )
                         }
+                        urlData = it.data.overall_url_chart
                         madapter.differ.submitList(topLinkList)
                         binding.progressCircular.isVisible = false
+                        if(urlData.isNullOrEmpty()){
+                            binding.lytAnalytics.isVisible = false
+                        } else {
+                            Log.d("error001","setting line chart $urlData")
+                            setUpLineChart(urlData!!)
+                        }
                     }
                 }
                 is Resource.Loading -> {
@@ -152,7 +179,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun getGreeting(hour: Int): String {
         return when (hour) {
-            in 5..11 -> "Good Morning"
+            in 1..11 -> "Good Morning"
             in 12..16 -> "Good Afternoon"
             else -> "Good Evening"
         }
@@ -162,6 +189,87 @@ class DashboardActivity : AppCompatActivity() {
         binding.rvLinks.apply {
             layoutManager = LinearLayoutManager(this@DashboardActivity)
             adapter = madapter
+        }
+    }
+
+    private fun setUpLineChart( urlData : Map<String,Int>) {
+
+        val entries = mutableListOf<Entry>()
+        val inputDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val outputDateFormat = SimpleDateFormat("dd MMMM", Locale.getDefault())
+
+        var i = 0
+        for((date,cCount) in urlData){
+            val inputDate = inputDateFormat.parse(date)
+            val outputDate = outputDateFormat.format(inputDate!!)
+            formattedDate.add(outputDate)
+            clickCount.add(cCount)
+            entries.add(Entry(i.toFloat(),cCount.toFloat()))
+            i++
+        }
+        val lineDataSet = LineDataSet(entries, "Clicks")
+
+        lineDataSet.apply {
+            color = ContextCompat.getColor(this@DashboardActivity, R.color.color_primary)
+            lineWidth = 2f
+            setDrawValues(false)
+            setDrawCircles(false)
+            setDrawCircleHole(false)
+            setDrawFilled(true)
+            if (Utils.getSDKInt() >= 18) {
+                // fill drawable only supported on api level 18 and above
+                val drawable = ContextCompat.getDrawable(this@DashboardActivity, R.drawable.fade_blue)
+                fillDrawable = drawable
+            } else {
+                fillColor = Color.WHITE
+            }
+        }
+
+
+        val lineData = LineData(lineDataSet)
+
+        binding.apply {
+            lytChart.apply {
+                setTouchEnabled(false)
+                setPinchZoom(false)
+                legend.isEnabled = false
+                description.isEnabled = false
+                data = lineData
+
+                xAxis.labelCount = 7
+                xAxis.valueFormatter = MyAxisFormatter(formattedDate)
+                xAxis.position = XAxis.XAxisPosition.BOTTOM
+                xAxis.setCenterAxisLabels(false)
+                xAxis.granularity = 1f
+                xAxis.setDrawAxisLine(true)
+                xAxis.textColor = ContextCompat.getColor(this@DashboardActivity, R.color.color_grey)
+                xAxis.setDrawLabels(true)
+                xAxis.gridColor = ContextCompat.getColor(this@DashboardActivity, R.color.color_grey)
+                xAxis.axisMinimum = 0f
+
+                axisLeft.setDrawGridLines(true)
+                axisLeft.gridColor = ContextCompat.getColor(this@DashboardActivity, R.color.color_grey)
+                axisLeft.axisLineColor = ContextCompat.getColor(this@DashboardActivity, R.color.color_grey)
+                axisLeft.textColor = ContextCompat.getColor(this@DashboardActivity, R.color.color_grey)
+                axisLeft.axisMinimum = 0f
+
+                axisRight.isEnabled = false
+                invalidate()
+            }
+        }
+    }
+
+    inner class MyAxisFormatter(
+        private val customLabels : List<String>
+    ) : IndexAxisValueFormatter() {
+
+        override fun getFormattedValue(value: Float): String {
+            val index = ceil(value).toInt()
+            return if (index >= 0 && index < customLabels.size) {
+                customLabels[index]
+            } else {
+                ""
+            }
         }
     }
 }
