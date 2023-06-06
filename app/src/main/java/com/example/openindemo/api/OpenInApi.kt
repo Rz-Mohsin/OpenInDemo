@@ -9,6 +9,12 @@ import retrofit2.http.Url
 interface OpenInApi {
 
     @GET
-    suspend fun fetchData(@Url endpoint: String, @Header("Authorization") token: String) : Response<OpenInApiResponse>
+    suspend fun fetchData(
+        @Url
+        endpoint: String,
+        @Header
+        ("Authorization") token: String
+    )
+    : Response<OpenInApiResponse>
 
 }

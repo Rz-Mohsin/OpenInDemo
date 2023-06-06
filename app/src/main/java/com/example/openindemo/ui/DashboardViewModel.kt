@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import com.example.openindemo.models.OpenInApiResponse
 import com.example.openindemo.repo.OpenInRepository
 import com.example.openindemo.utils.Resource
-import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,8 +22,12 @@ class DashboardViewModel(
     fun getAllData(endPoint : String, token: String) {
         CoroutineScope(Dispatchers.IO).launch {
             _userData.postValue(Resource.Loading())
-            val response = repository.getAllData(endPoint,token)
-            _userData.postValue(handleResponse(response))
+            try{
+                val response = repository.getAllData(endPoint,token)
+                _userData.postValue(handleResponse(response))
+            } catch (e : Exception) {
+                _userData.postValue(Resource.Error("Failed to load data, Check your internet connection"))
+            }
         }
     }
 

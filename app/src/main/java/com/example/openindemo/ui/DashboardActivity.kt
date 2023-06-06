@@ -5,7 +5,6 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -36,7 +35,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private lateinit var binding : ActivityDashboardBinding
     private lateinit var viewModel: DashboardViewModel
-    private lateinit var madapter : LinkListAdapter
+    private lateinit var mAdapter : LinkListAdapter
 
     private var topLinkList = ArrayList<Link>()
     private var recentLinkList = ArrayList<Link>()
@@ -52,7 +51,7 @@ class DashboardActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         viewModel = ViewModelProvider(this,DashboardViewModelProviderFactory(repository))[DashboardViewModel::class.java]
-        madapter = LinkListAdapter(this)
+        mAdapter = LinkListAdapter(this)
 
         setUpRecyclerView()
         initViews()
@@ -64,6 +63,7 @@ class DashboardActivity : AppCompatActivity() {
             }
         }
         else{
+            binding.progressCircular.isVisible = false
             Toast.makeText(this,"Failed to load data, Check internet connection",Toast.LENGTH_SHORT).show()
         }
 
@@ -81,7 +81,6 @@ class DashboardActivity : AppCompatActivity() {
                 is Resource.Success -> {
                     binding.progressCircular.isVisible = true
                     resource.data?.let { it ->
-                        Log.d("error001","Fetched url chart ${it.data.overall_url_chart}")
                         val topLinks  = it.data.top_links
                         val recentLinks = it.data.recent_links
                         topLinks.forEach { tLink ->
@@ -111,12 +110,12 @@ class DashboardActivity : AppCompatActivity() {
                             )
                         }
                         urlData = it.data.overall_url_chart
-                        madapter.differ.submitList(topLinkList)
+                        mAdapter.differ.submitList(topLinkList)
                         binding.progressCircular.isVisible = false
                         if(urlData.isNullOrEmpty()){
                             binding.lytAnalytics.isVisible = false
                         } else {
-                            Log.d("error001","setting line chart $urlData")
+                            binding.lytAnalytics.isVisible = true
                             setUpLineChart(urlData!!)
                         }
                     }
@@ -137,12 +136,10 @@ class DashboardActivity : AppCompatActivity() {
             radioGroup.setOnCheckedChangeListener { _, checkedId ->
                 when(checkedId){
                     R.id.btnTopLink -> {
-                        Log.d("error001","Button Top link clicked")
-                        madapter.differ.submitList(topLinkList)
+                        mAdapter.differ.submitList(topLinkList)
                     }
                     R.id.btnRecentLink -> {
-                        Log.d("error001","Button Recent link clicked")
-                        madapter.differ.submitList(recentLinkList)
+                        mAdapter.differ.submitList(recentLinkList)
                     }
                 }
             }
@@ -150,28 +147,22 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun hasInternetConnection(): Boolean {
-        val connectivityManager = getSystemService(
-            CONNECTIVITY_SERVICE
-        ) as ConnectivityManager
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            val activeNetwork = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
-            return when{
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-                else -> false
+        val connectivityManager = getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        // For 29 api or above
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork) ?: return false
+            return when {
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ->    true
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ->   true
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ->   true
+                else ->     false
             }
         }
-        else
-        {
-            connectivityManager.activeNetworkInfo?.run {
-                return when(type){
-                    ConnectivityManager.TYPE_WIFI -> true
-                    ConnectivityManager.TYPE_MOBILE -> true
-                    ConnectivityManager.TYPE_ETHERNET -> true
-                    else -> false
-                }
+        // For below 29 api
+        else {
+            if (connectivityManager.activeNetworkInfo != null && connectivityManager.activeNetworkInfo!!.isConnectedOrConnecting) {
+                return true
             }
         }
         return false
@@ -179,7 +170,7 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun getGreeting(hour: Int): String {
         return when (hour) {
-            in 1..11 -> "Good Morning"
+            in 0..11 -> "Good Morning"
             in 12..16 -> "Good Afternoon"
             else -> "Good Evening"
         }
@@ -188,7 +179,7 @@ class DashboardActivity : AppCompatActivity() {
     private fun setUpRecyclerView() {
         binding.rvLinks.apply {
             layoutManager = LinearLayoutManager(this@DashboardActivity)
-            adapter = madapter
+            adapter = mAdapter
         }
     }
 
@@ -225,7 +216,6 @@ class DashboardActivity : AppCompatActivity() {
             }
         }
 
-
         val lineData = LineData(lineDataSet)
 
         binding.apply {
@@ -254,8 +244,10 @@ class DashboardActivity : AppCompatActivity() {
                 axisLeft.axisMinimum = 0f
 
                 axisRight.isEnabled = false
+                animateXY(2000,2000)
                 invalidate()
             }
+            tvChartRange.text = "${formattedDate.first()} - ${formattedDate.last()}"
         }
     }
 

@@ -10,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.openindemo.databinding.ItemLinkListBinding
 import com.example.openindemo.models.Link
+import java.text.SimpleDateFormat
+import java.util.*
 
 class LinkListAdapter(val context : Context) : RecyclerView.Adapter<LinkListAdapter.LinkListViewHolder>()  {
     inner class LinkListViewHolder(val binding : ItemLinkListBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -17,7 +19,7 @@ class LinkListAdapter(val context : Context) : RecyclerView.Adapter<LinkListAdap
             binding.apply {
                 tvClicksCount.text = item.total_clicks.toString()
                 tvLinkName.text = item.title
-                tvLinkCreationTime.text = item.times_ago
+                tvLinkCreationTime.text = formatDate(item.created_at)
                 tvSmartLink.text = item.smart_link
                 val imageUrl = item.thumbnail
                 if(imageUrl!=null){
@@ -58,5 +60,12 @@ class LinkListAdapter(val context : Context) : RecyclerView.Adapter<LinkListAdap
 
     override fun getItemCount(): Int {
         return differ.currentList.size
+    }
+
+    private fun formatDate(dateString: String): String {
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+        val date = inputFormat.parse(dateString)
+        return outputFormat.format(date)
     }
 }
